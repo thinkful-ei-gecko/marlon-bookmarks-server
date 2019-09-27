@@ -1,14 +1,15 @@
 'use strict';
 
 const express = require('express');
-const bookmarks = require('Bookmarks');
-
+const bookmarks = require('./Bookmarks');
+const uuid  = require('uuid/v4');
 const bookmarkRouter = express.Router();
 const bodyParser = express.json();
+const logger = require('../logger');
 
 bookmarkRouter
-  .route('/bookmark')
-  .get((req, res) =>{
+  .route('/bookmarks')
+  .get((req, res) => {
     res.json(bookmarks);
   })
   .post(bodyParser, (req, res) => {
@@ -46,11 +47,22 @@ bookmarkRouter
   });
 
 bookmarkRouter
-  .route('/bookmark')
-  .get((req, res) =>{
-    res.json(bookmarks);
+  .route('/bookmarks/:id')
+  .get((req, res) => {
+    const { id } = req.params;
+    const bookmark = bookmarks.find(bookmark => bookmark.id === id);
+
+    if (!bookmark) {
+      logger.error(`Bookmark with id ${id} not found. `);
+      return res
+        .status(404)
+        .send('Not found');
+    }
+    
+    res.json(bookmark);
+    
   })
-  .delete('/bookmarks/:id', (req, res) => {
+  .delete((req, res) => {
     const { id } = req.params;
     const bookmarkIndex = bookmarks.findIndex(bookmark => bookmark.id === id);
   
@@ -64,9 +76,10 @@ bookmarkRouter
     bookmarks.splice(bookmarkIndex, 1);
   
     logger.info(`Bookmark with id ${id} was deleted.`);
-  
     res
       .status(204)
       .end();
   });
   
+
+module.exports = bookmarkRouter;
