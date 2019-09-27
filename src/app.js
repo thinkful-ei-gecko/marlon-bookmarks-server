@@ -6,7 +6,9 @@ const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const { NODE_ENV } = require('./config');
+const bookmarkRouter = require('./bookmark/bookmark-router');
 const winston = require('winston');
+const uuid  = require('uuid/v4');
 const app = express();
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
@@ -33,9 +35,6 @@ app.use(express.json());
 app.use(function validateBearerToken(req, res, next) {
   const apiToken = process.env.API_TOKEN;
   const authToken = req.get('Authorization');
-  console.log(process.env);
-  console.log(apiToken);
-  console.log(authToken);
   if (!authToken || authToken.split(' ')[1] !== apiToken) {
     logger.error(`Unauthorized request to path: ${req.path}`);
     return res.status(401).json({ error: 'Unauthorized request' });
@@ -43,6 +42,8 @@ app.use(function validateBearerToken(req, res, next) {
   // move to the next middleware
   next();
 });
+
+app.use(bookmarkRouter);
 
 app.get('/', (req, res) => { 
   res.send('Hello, world!');
